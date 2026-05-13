@@ -76,7 +76,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/yourusername/idempotency-spring-boot-starter</url>
+            <url>https://maven.pkg.github.com/melbiialy/idempotency-spring-boot-starter</url>
         </repository>
     </distributionManagement>
 
