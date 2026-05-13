@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>dev.once</groupId>
+    <groupId>io.github.melbiialy</groupId>
     <artifactId>idempotency-spring-boot-starter</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
