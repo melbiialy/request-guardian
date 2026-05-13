@@ -1,0 +1,67 @@
+package dev.once.storage;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.time.Instant;
+import java.util.concurrent.TimeUnit;
+
+public class RedisIdempotencyStore implements IdempotencyStore{
+    private final RedisTemplate<String, String> template;
+    private final long ttlSeconds;
+    private final ObjectMapper objectMapper;
+
+    public RedisIdempotencyStore(RedisTemplate<String, String> template,ObjectMapper objectMapper, long ttlSeconds) {
+        this.template = template;
+        this.ttlSeconds = ttlSeconds;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void set(String key, IdempotentResponse idempotentResponse) {
+        try {
+            String json = objectMapper.writeValueAsString(idempotentResponse);
+            template.opsForValue()
+                    .set(key, json, ttlSeconds, TimeUnit.SECONDS);
+        }catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize idempotent response:",e);
+        }
+
+    }
+
+    @Override
+    public IdempotentResponse get(String key) {
+        String json = template.opsForValue().get(key);
+        IdempotentResponse response = objectMapper.convertValue(json, IdempotentResponse.class);
+        if (response == null) return null;
+
+        if (!response.isInFlight() && response.timestamp().plusSeconds(ttlSeconds).isBefore(Instant.now())) {
+            template.delete(key);
+            return null;
+        }
+
+        return response;
+    }
+
+    @Override
+    public void delete(String key) {
+        template.delete(key);
+    }
+
+    @Override
+    public void setInFlight(String key) {
+        try {
+            String json = objectMapper.writeValueAsString(IdempotentResponse.inFlight());
+            template.opsForValue().set(
+                     key,
+                    json,
+                    30,
+                    TimeUnit.SECONDS
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set in-flight state", e);
+        }
+
+    }
+}
