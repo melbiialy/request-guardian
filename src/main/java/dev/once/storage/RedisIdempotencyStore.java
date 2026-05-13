@@ -33,15 +33,19 @@ public class RedisIdempotencyStore implements IdempotencyStore{
     @Override
     public IdempotentResponse get(String key) {
         String json = template.opsForValue().get(key);
-        IdempotentResponse response = objectMapper.convertValue(json, IdempotentResponse.class);
-        if (response == null) return null;
-
-        if (!response.isInFlight() && response.timestamp().plusSeconds(ttlSeconds).isBefore(Instant.now())) {
-            template.delete(key);
+        if (json == null) {
             return null;
         }
-
-        return response;
+        try {
+            IdempotentResponse response = objectMapper.readValue(json, IdempotentResponse.class);
+            if (!response.isInFlight() && response.timestamp().plusSeconds(ttlSeconds).isBefore(Instant.now())) {
+                template.delete(key);
+                return null;
+            }
+            return response;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize idempotent response", e);
+        }
     }
 
     @Override

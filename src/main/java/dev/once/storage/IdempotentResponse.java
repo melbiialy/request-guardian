@@ -1,6 +1,6 @@
 package dev.once.storage;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.Instant;
 import java.util.Map;
@@ -10,6 +10,7 @@ public record IdempotentResponse(int statusCode, byte[] body, String contentType
         return new IdempotentResponse(0, null, null, Instant.now(), Map.of(), Status.IN_FLIGHT);
     }
 
+    @JsonIgnore
     public boolean isInFlight() {
         return status == Status.IN_FLIGHT;
     }
