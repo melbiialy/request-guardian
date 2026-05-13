@@ -31,7 +31,7 @@ public class WrapperFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, responseWrapper);
         }finally {
-            String key = (String) request.getAttribute("idempotency-key");
+            String key = (String) request.getAttribute("idempotency_key");
             if (key!=null){
                 byte[] body = responseWrapper.getContent();
                 Map<String,String> headers = new HashMap<>();
